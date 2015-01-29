@@ -15,6 +15,7 @@ from django.utils import six, dateparse
 from django.utils.six.moves.urllib.parse import urlsplit
 
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpRequest
 try:
     from django.utils.encoding import force_text, force_bytes
 except ImportError:
@@ -235,8 +236,11 @@ def build_absolute_uri(request, location, protocol=None):
     """
     from .account import app_settings as account_settings
 
-    if request is None:
-        site = get_current_site()
+    if request is None or isinstance(request, Site):
+        if isinstance(request, Site):
+            site = request
+        else:
+            site = get_current_site()
         bits = urlsplit(location)
         if not (bits.scheme and bits.netloc):
             uri = '{proto}://{domain}{url}'.format(
