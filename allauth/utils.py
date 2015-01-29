@@ -11,6 +11,7 @@ from django.db.models.fields import (DateTimeField, DateField,
 from django.utils import six, dateparse
 from django.utils.datastructures import SortedDict
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpRequest
 try:
     from django.utils.encoding import force_text
 except ImportError:
@@ -191,9 +192,16 @@ def set_form_field_order(form, fields_order):
 
 
 def build_absolute_uri(request, location, protocol=None):
-    uri = request.build_absolute_uri(location)
-    if protocol:
-        uri = protocol + ':' + uri.partition(':')[2]
+    if isinstance(request, HttpRequest):
+        uri = request.build_absolute_uri(location)
+        if protocol:
+            uri = protocol + ':' + uri.partition(':')[2]
+    else:
+        # request is a Site() instance
+        if protocol:
+            uri = protocol + '://' + request.domain + location
+        else:
+            uri = 'http://' + request.domain + location
     return uri
 
 
