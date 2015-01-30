@@ -8,13 +8,19 @@ from django.core import urlresolvers
 from django.db.models import FieldDoesNotExist
 from django.db.models.fields import (DateTimeField, DateField,
                                      EmailField, TimeField)
-from django.utils import importlib, six, dateparse
+from django.utils import six, dateparse
 from django.utils.datastructures import SortedDict
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpRequest
 try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
+
+try:
+    import importlib
+except:
+    from django.utils import importlib
 
 
 def _generate_unique_username_base(txts):
@@ -186,9 +192,16 @@ def set_form_field_order(form, fields_order):
 
 
 def build_absolute_uri(request, location, protocol=None):
-    uri = request.build_absolute_uri(location)
-    if protocol:
-        uri = protocol + ':' + uri.partition(':')[2]
+    if isinstance(request, HttpRequest):
+        uri = request.build_absolute_uri(location)
+        if protocol:
+            uri = protocol + ':' + uri.partition(':')[2]
+    else:
+        # request is a Site() instance
+        if protocol:
+            uri = protocol + '://' + request.domain + location
+        else:
+            uri = 'http://' + request.domain + location
     return uri
 
 
