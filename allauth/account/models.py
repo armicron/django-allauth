@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 import datetime
 
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.db import models
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
@@ -23,11 +25,13 @@ class EmailAddress(models.Model):
 
     user = models.ForeignKey(allauth_app_settings.USER_MODEL,
                              verbose_name=_('user'))
-    email = models.EmailField(unique=app_settings.UNIQUE_EMAIL,
+    email = models.EmailField(unique=not(app_settings.UNIQUE_EMAIL and
+                                         app_settings.UNIQUE_EMAIL_MULTISITE),
                               max_length=254,
                               verbose_name=_('e-mail address'))
     verified = models.BooleanField(verbose_name=_('verified'), default=False)
     primary = models.BooleanField(verbose_name=_('primary'), default=False)
+    site = models.ForeignKey(Site, default=settings.SITE_ID)
 
     objects = EmailAddressManager()
 
@@ -36,6 +40,8 @@ class EmailAddress(models.Model):
         verbose_name_plural = _("email addresses")
         if not app_settings.UNIQUE_EMAIL:
             unique_together = [("user", "email")]
+        if app_settings.UNIQUE_EMAIL_MULTISITE:
+            unique_together = [("email", "site")]
 
     def __str__(self):
         return "%s (%s)" % (self.email, self.user)
