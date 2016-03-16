@@ -26,6 +26,8 @@ class AppSettings(object):
         assert (self.EMAIL_VERIFICATION
                 != self.EmailVerificationMethod.MANDATORY) \
             or self.EMAIL_REQUIRED
+        # UNIQUE_EMAIL_MULTISITE can be enabled if UNIQUE_EMAIL is enabled too
+        assert (not self.UNIQUE_EMAIL_MULTISITE) or self.UNIQUE_EMAIL
         if not self.USER_MODEL_USERNAME_FIELD:
             assert not self.USERNAME_REQUIRED
             assert self.AUTHENTICATION_METHOD \
@@ -116,6 +118,15 @@ class AppSettings(object):
         Enforce uniqueness of e-mail addresses
         """
         return self._setting("UNIQUE_EMAIL", True)
+
+    @property
+    def UNIQUE_EMAIL_MULTISITE(self):
+        """
+        Change uniqueness of e-mail addresses
+        If True, e-mail will be unique within a site. For example:
+        'a@a.com' will be able to exist on site 1 and site 2 without interferring
+        """
+        return self._setting("UNIQUE_EMAIL_MULTISITE", False)
 
     @property
     def SIGNUP_PASSWORD_VERIFICATION(self):
