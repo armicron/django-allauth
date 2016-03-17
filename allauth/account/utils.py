@@ -14,6 +14,7 @@ from django.utils import six
 from django.utils.http import urlencode
 from django.utils.http import int_to_base36, base36_to_int
 from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
 
 from allauth.compat import OrderedDict
 
@@ -132,8 +133,10 @@ def perform_login(request, user, email_verification,
         return HttpResponseRedirect(reverse('account_inactive'))
 
     from .models import EmailAddress
-    has_verified_email = EmailAddress.objects.filter(user=user,
-                                                     verified=True).exists()
+    filters = {'user': user, 'verified': True}
+    if app_settings.UNIQUE_EMAIL_MULTISITE:
+        filters.update({'site': Site.objects.get_current()})
+    has_verified_email = EmailAddress.objects.filter(**filters).exists()
     if email_verification == EmailVerificationMethod.NONE:
         pass
     elif email_verification == EmailVerificationMethod.OPTIONAL:
