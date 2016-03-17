@@ -1,4 +1,5 @@
 from django.contrib.auth.backends import ModelBackend
+from django.contrib.sites.models import Site
 
 from ..utils import get_user_model
 from .utils import filter_users_by_email
@@ -50,7 +51,11 @@ class AuthenticationBackend(ModelBackend):
 
         email = credentials.get('email', credentials.get('username'))
         if email:
+            site = Site.objects.get_current()
             for user in filter_users_by_email(email):
+                if app_settings.UNIQUE_EMAIL_MULTISITE:
+                    if user.sprofile.site != site:
+                        continue
                 if user.check_password(credentials["password"]):
                     return user
         return None
