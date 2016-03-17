@@ -253,8 +253,10 @@ def setup_user_email(request, user, addresses):
     out email confirmation mails etc.
     """
     from .models import EmailAddress
-
-    assert EmailAddress.objects.filter(user=user).count() == 0
+    filters = {'user': user}
+    if app_settings.UNIQUE_EMAIL_MULTISITE:
+        filters.update({'site': Site.objects.get_current()})
+    assert EmailAddress.objects.filter(**filters).count() == 0
     priority_addresses = []
     # Is there a stashed e-mail?
     adapter = get_adapter()
