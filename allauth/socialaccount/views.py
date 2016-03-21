@@ -1,15 +1,16 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.contrib.sites.models import Site
 from django.contrib.auth.decorators import login_required
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
+from django.conf import settings
 
-from ..account.views import (CloseableSignupMixin,
+from ..account.views import (AjaxCapableProcessFormViewMixin,
+                             CloseableSignupMixin,
                              RedirectAuthenticatedUserMixin)
 from ..account.adapter import get_adapter as get_account_adapter
-from ..utils import get_form_class
+from ..utils import get_form_class, get_current_site
 
 from .adapter import get_adapter
 from .models import SocialLogin
@@ -19,9 +20,9 @@ from . import app_settings
 
 
 class SignupView(RedirectAuthenticatedUserMixin, CloseableSignupMixin,
-                 FormView):
+                 AjaxCapableProcessFormViewMixin, FormView):
     form_class = SignupForm
-    template_name = 'socialaccount/signup.html'
+    template_name = 'socialaccount/signup.%s' % getattr(settings, 'ACCOUNT_TEMPLATE_EXTENSION', 'html')
 
     def get_form_class(self):
         return get_form_class(app_settings.FORMS,
@@ -53,7 +54,7 @@ class SignupView(RedirectAuthenticatedUserMixin, CloseableSignupMixin,
 
     def get_context_data(self, **kwargs):
         ret = super(SignupView, self).get_context_data(**kwargs)
-        ret.update(dict(site=Site.objects.get_current(),
+        ret.update(dict(site=get_current_site(self.request),
                         account=self.sociallogin.account))
         return ret
 
@@ -64,20 +65,20 @@ signup = SignupView.as_view()
 
 
 class LoginCancelledView(TemplateView):
-    template_name = "socialaccount/login_cancelled.html"
+    template_name = "socialaccount/login_cancelled.%s" % getattr(settings, 'ACCOUNT_TEMPLATE_EXTENSION', 'html')
 
 login_cancelled = LoginCancelledView.as_view()
 
 
 class LoginErrorView(TemplateView):
-    template_name = "socialaccount/authentication_error.html"
+    template_name = "socialaccount/authentication_error.%s" % getattr(settings, 'ACCOUNT_TEMPLATE_EXTENSION', 'html')
 
 
 login_error = LoginErrorView.as_view()
 
 
-class ConnectionsView(FormView):
-    template_name = "socialaccount/connections.html"
+class ConnectionsView(AjaxCapableProcessFormViewMixin, FormView):
+    template_name = "socialaccount/connections.%s" % getattr(settings, 'ACCOUNT_TEMPLATE_EXTENSION', 'html')
     form_class = DisconnectForm
     success_url = reverse_lazy("socialaccount_connections")
 

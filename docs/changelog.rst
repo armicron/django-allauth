@@ -3,6 +3,62 @@ Changelog
 
 This chapter contains notes on upgrading.
 
+From 0.24.0
+***********
+
+- Setting a password after logging in with a social account no longer logs out
+  the user by default on Django 1.7+. Setting an initial password and changing
+  the password both respect `settings.ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE`.
+
+From 0.23.0
+***********
+
+- Increased `SocialApp` key/secret/token sizes to 191, decreased
+  `SocialAccount.uid` size to 191. The latter was done in order to
+  accomodate for MySQL in combination with utf8mb4 and contraints on
+  `uid`. Note that `uid` is used to store OpenID URLs, which can
+  theoretically be longer than 191 characters, although in practice
+  this does not seem to be the case. In case you really need to
+  control the `uid` length, set `settings.SOCIALACCOUNT_UID_MAX_LENGTH`
+  accordingly. Migrations are in place.
+
+From 0.21.0
+***********
+
+- Dropped support for Python 2.6 and Django <1.6.
+
+- The default Facebook Graph API version is now v2.4.
+
+- Template context processors are no longer used. The context
+  processor for ``allauth.account`` was already empty, and the context
+  processor for ``allauth.socialaccount`` has been converted into the
+  :doc:`{% get_providers %} <templates>` template tag.
+
+
+From 0.20.0
+***********
+
+- In version 0.20.0 an `account` migration (`0002_email_max_length`)
+  was added to alter the maximum length of the email
+  field. Unfortunately, a side effect of this migration was that the
+  `unique=True` setting slipped through as well. Hardcoding this to
+  `True` is wrong, as uniqueness actually depends on the
+  `ACCOUNT_UNIQUE_EMAIL` setting. We cannot create a followup `0003`
+  migration to set things straight, as the `0002` migration may fail
+  on installations where email addresses are not unique. Therefore, we
+  had to resort to changing an existing migration which is normally
+  not the right thing to do. In case your installation has
+  `ACCOUNT_UNIQUE_EMAIL` set to `True`, you need not take any further
+  action. In case it is set to `False` and migration `0002` already
+  ran, please issue a `--fake` migration down to `0001`, followed by a
+  re-run of the updated `0002`.
+
+From 0.19.1
+***********
+
+- Given that the `max_length` for the Django 1.8 `EmailField` has been
+  bumped to 254, allauth is following up. Migrations (`account`) are
+  in place.
 
 From 0.18.0
 ***********

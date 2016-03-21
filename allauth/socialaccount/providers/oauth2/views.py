@@ -15,6 +15,7 @@ from allauth.socialaccount.providers.oauth2.client import (OAuth2Client,
                                                            OAuth2Error)
 from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.models import SocialToken, SocialLogin
+from allauth.utils import get_request_param
 from ..base import AuthAction, AuthError
 
 
@@ -24,6 +25,9 @@ class OAuth2Adapter(object):
     redirect_uri_protocol = None  # None: use ACCOUNT_DEFAULT_HTTP_PROTOCOL
     access_token_method = 'POST'
     login_cancelled_error = 'access_denied'
+    scope_delimiter = ' '
+    basic_auth = False
+    headers = None
 
     def get_provider(self):
         return providers.registry.by_id(self.provider_id)
@@ -67,7 +71,10 @@ class OAuth2View(object):
                               self.adapter.access_token_method,
                               self.adapter.access_token_url,
                               callback_url,
-                              scope)
+                              scope,
+                              scope_delimiter=self.adapter.scope_delimiter,
+                              headers=self.adapter.headers,
+                              basic_auth=self.adapter.basic_auth)
         return client
 
 
@@ -118,7 +125,7 @@ class OAuth2CallbackView(OAuth2View):
                 login.state = SocialLogin \
                     .verify_and_unstash_state(
                         request,
-                        request.REQUEST.get('state'))
+                        get_request_param(request, 'state'))
             else:
                 login.state = SocialLogin.unstash_state(request)
             return complete_social_login(request, login)
