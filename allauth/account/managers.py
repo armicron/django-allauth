@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db import models
 from django.db.models import Q
+from django.contrib.sites.models import Site
 
 from . import app_settings
 
@@ -14,7 +15,10 @@ class EmailAddressManager(models.Manager):
         try:
             email_address = self.get(user=user, email__iexact=email)
         except self.model.DoesNotExist:
-            email_address = self.create(user=user, email=email)
+            kwargs = {'user': user, 'email': email}
+            if app_settings.UNIQUE_EMAIL_MULTISITE:
+                kwargs.update({'site': Site.objects.get_current()})
+            email_address = self.create(**kwargs)
             if confirm:
                 email_address.send_confirmation(request,
                                                 signup=signup)
