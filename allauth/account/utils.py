@@ -254,24 +254,29 @@ def setup_user_email(request, user, addresses):
     """
     from .models import EmailAddress
     filters = {'user': user}
+    kwargs = {}
+    site = Site.objects.get_current()
     if app_settings.UNIQUE_EMAIL_MULTISITE:
-        filters.update({'site': Site.objects.get_current()})
+        filters.update({'site': site})
+        kwargs.update({'site': site})
     assert EmailAddress.objects.filter(**filters).count() == 0
     priority_addresses = []
     # Is there a stashed e-mail?
     adapter = get_adapter()
     stashed_email = adapter.unstash_verified_email(request)
     if stashed_email:
-        priority_addresses.append(EmailAddress(user=user,
-                                               email=stashed_email,
-                                               primary=True,
-                                               verified=True))
+        kwargs.update({'user':user,
+                  'email':stashed_email,
+                  'primary':True,
+                  'verified':True})
+        priority_addresses.append(EmailAddress(**kwargs))
     email = user_email(user)
     if email:
-        priority_addresses.append(EmailAddress(user=user,
-                                               email=email,
-                                               primary=True,
-                                               verified=False))
+        kwargs.update({'user':user,
+                  'email':email,
+                  'primary':True,
+                  'verified':False})
+        priority_addresses.append(EmailAddress(**kwargs))
     addresses, primary = cleanup_email_addresses(request,
                                                  priority_addresses
                                                  + addresses)
