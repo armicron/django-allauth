@@ -255,7 +255,7 @@ class BaseSignupForm(_base_signup_form_class()):
     def clean_email(self):
         value = self.cleaned_data["email"]
         value = get_adapter().clean_email(value)
-        if app_settings.UNIQUE_EMAIL and not app_settings.UNIQUE_EMAIL_MULTISITE:
+        if app_settings.UNIQUE_EMAIL:
             if value and email_address_exists(value):
                 self.raise_duplicate_email_error()
         return value
